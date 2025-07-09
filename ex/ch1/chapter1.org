@@ -1,0 +1,180 @@
+* Chapter 1: Building Abstractions with Procedures
+** 1.1 The Elements of Programming
+*** EXERCISE 1.1
+#+begin_src scheme
+  10
+  (+ 5 3 4)
+  (- 9 1)
+  (/ 6 2)
+  (+ (* 2 4) (- 4 6))
+  (define a 3)
+  (define b (+ a 1))
+  (+ a b (* a b))
+  (= a b)
+  (if (and (> b a) (< b (* a b)))
+      b
+      a)
+  (cond ((= a 4) 6)
+        ((= b 4) (+ 6 7 a))
+        (else 25))
+  (+ 2 (if (> b a) b a))
+  (* (cond ((> a b) a)
+           ((< a b) b)
+           (else -1))
+     (+ a 1))
+#+end_src
+
+#+RESULTS:
+: 10
+: 12
+: 8
+: 3
+: 6
+: 19
+: #f
+: 4
+: 16
+: 6
+: 16
+
+*** EXERCISE 1.2
+#+begin_src scheme
+  ;;EXERCISE 1.2
+  (/ (+ 5 4 (- 2 (- 3 (+ 6 (/ 4 5)))))
+     (* 3 (- 6 2) (- 2 7)))
+#+end_src
+
+#+RESULTS:
+: -37/150
+
+*** EXERCISE 1.3
+#+begin_src scheme
+  ;; square
+  (define (square x)
+    (* x x))
+
+  ;; sum-of-squares
+  (define (sum-of-squares x y)
+    (+ (square x) (square y)))
+
+  ;; sum-squares-of-two-largest
+  (define (sum-squares-of-two-largest x y z)
+    (cond ((and (<= x y) (<= x z)) (sum-of-squares y z)) ; Case 1: x is the smallest
+          ((<= y z) (sum-of-squares x z))                ; Case 2: x is not the smallest, and z is larger than y
+          (else (sum-of-squares x y))))                  ; Case 3: x is not the smallest, and y is larger than z
+#+end_src
+
+*** EXERCISE 1.4
+#+begin_src scheme
+  (define (a-plus-abs-b a b)
+    ((if (> b 0) + -) a b))
+#+end_src
+This procedure computes the sum of a and the absolute value of b (a + |b|).
+*** EXERCISE 1.5
+#+begin_src scheme
+  (define (p) (p))
+
+  (define (test x y)
+    (if (= x 0)
+        0
+        y))
+#+end_src
+- Applicative-order evaluation:
+   Ben will observe that the interpreter enters an infinite loop. In applicative order, all arguments are evaluated before the procedure is applied. The interpreter tries to evaluate (p). This results in a call to p, which in turn calls p, and so on, leading to an infinite recursion. The test procedure is never actually called because the evaluation of its second argument never finishes.
+- Normal-order evaluation:
+   Ben will observe that the interpreter returns the value 0. In normal order, arguments are not evaluated until their values are needed.
+*** EXERCISE 1.6
+
+** 1.2 Procedures and the Processes They Generate
+*** EXERCISE 1.9
+#+begin_src scheme
+  (define (+ a b)
+    (if (= a 0)
+        b
+        (inc (+ (dec a) b))))
+
+  (define (+ a b)
+    (if (= a 0)
+        b
+        (+ (dec a) (inc b))))
+#+end_src
+1. Procedure 1:
+  - This procedure generates a recursive process. The + procedure has a recursive call (+ (dec a) b) that is nested within an inc operation. This means the inc operation is deferred, leading to a chain of pending operations that first expands and then contracts.
+  - Trace for (+ 4 5):
+    #+begin_src scheme
+      (+ 4 5)
+      (inc (+ 3 5))
+      (inc (inc (+ 2 5)))
+      (inc (inc (inc (+ 1 5))))
+      (inc (inc (inc (inc (+ 0 5)))))
+      (inc (inc (inc (inc 5))))
+      (inc (inc (inc 6)))
+      (inc (inc 7))
+      (inc 8)
+      9
+    #+end_src
+2. Procedure 2:
+   - This procedure generates an iterative process. The recursive call (+ (dec a) (inc b)) is in a tail position. This means the procedure immediately calls itself with new arguments, without building up any deferred operations. The state of the computation can be completely captured by the values of its arguments a and b at each step.
+   - Trace for (+ 4 5):
+     #+begin_src scheme
+       (+ 4 5)
+       (+ 3 6)
+       (+ 2 7)
+       (+ 1 8)
+       (+ 0 9)
+       9
+     #+end_src
+
+*** EXERCISE 1.10
+#+begin_src scheme
+  (define (A x y)
+    (cond ((= y 0) 0)
+          ((= x 0) (* 2 y))
+          ((= y 1) 2)
+          (else (A (- x 1)
+                   (A x (- y 1))))))
+
+  (A 1 10)
+  (A 2 4)
+  (A 3 3)
+  ;; (define (f n) (A 0 n))
+  ;; (define (g n) (A 1 n))
+  ;; (define (h n) (A 2 n))
+  ;; (define (k n) (* 5 n n))
+#+end_src
+
+#+RESULTS:
+: 1024
+: 65536
+: 65536
+
+*** EXERCISE 1.11
+#+begin_src scheme
+  ;; recursive version
+  (define (f n)
+    (if (< n 3)
+        n
+        (+ (f (- n 1))
+           (* 2 (f (- n 2)))
+           (* 3 (f (- n 3))))))
+
+  ;; iterative version
+  (define (f n)
+    (if (< n 3)
+        n
+        (f-iter 2 1 0 n)))
+
+  (define (f-iter a b c n)
+    (if (< n 3)
+        a
+        (f-iter (+ a (* 2 b) (* 3 c)) a b (- n 1))))
+#+end_src
+*** EXERCISE 1.12
+#+begin_src scheme
+  (define (pascal row col)
+    (cond ((> col row)
+           (error "Invalid col"))
+          ((or (= col 0) (= col row)) 1)
+          (else (+ (pascal (- row 1) (- col 1))
+                   (pascal (- row 1) col)))))
+#+end_src
